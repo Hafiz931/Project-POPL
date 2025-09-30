@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"; // <-- 1. Impor useEffect
+import { useState, useEffect } from "react";
 import TaskForm from "./components/TaskForm";
 import TaskList from "./components/TaskList";
 import './App.css';
@@ -6,52 +6,40 @@ import './App.css';
 function App() {
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState('ontime');
-  // 2. State baru untuk menyimpan waktu saat ini, yang akan kita perbarui terus-menerus
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // 3. useEffect untuk menjalankan timer
   useEffect(() => {
-    // Jalankan fungsi ini setiap detik (1000 milidetik)
     const timer = setInterval(() => {
-      setCurrentTime(new Date()); // Perbarui state waktu saat ini
+      setCurrentTime(new Date());
     }, 1000);
-
-    // Fungsi cleanup: Hentikan timer saat komponen tidak lagi digunakan (untuk mencegah kebocoran memori)
     return () => clearInterval(timer);
-  }, []); // Array kosong berarti efek ini hanya berjalan sekali saat komponen pertama kali dimuat
+  }, []);
 
   const addTask = (taskData) => {
-    const newTask = {
-      ...taskData,
-      id: Date.now(),
-      done: false
-    };
+    const newTask = { ...taskData, id: Date.now(), done: false };
     setTasks([...tasks, newTask]);
   };
 
   const toggleTask = (id) => {
-    setTasks(tasks.map(task =>
-      task.id === id ? { ...task, done: !task.done } : task
-    ));
+    setTasks(tasks.map(task => task.id === id ? { ...task, done: !task.done } : task));
   };
 
   const deleteTask = (id) => {
     setTasks(tasks.filter(task => task.id !== id));
   };
 
-  // 4. Gunakan 'currentTime' dari state untuk perbandingan, bukan 'new Date()'
+  const updateTask = (id, updatedData) => {
+    setTasks(tasks.map(task =>
+      task.id === id ? { ...task, ...updatedData } : task
+    ));
+  };
+
   const now = currentTime;
   const filteredTasks = tasks.filter(task => {
-    const endTime = new Date(task.endTime); // Konversi waktu selesai tugas sekali saja
-    if (filter === 'ontime') {
-      return !task.done && endTime > now;
-    }
-    if (filter === 'overdue') {
-      return !task.done && endTime <= now;
-    }
-    if (filter === 'selesai') {
-      return task.done;
-    }
+    const endTime = new Date(task.endTime);
+    if (filter === 'ontime') return !task.done && endTime > now;
+    if (filter === 'overdue') return !task.done && endTime <= now;
+    if (filter === 'selesai') return task.done;
     return true;
   });
 
@@ -68,20 +56,32 @@ function App() {
 
   return (
     <div>
-      <h1>📝 NoteDo</h1>
-      <TaskForm onAdd={addTask} />
-      <div style={{ margin: "25px 0", display: "flex", justifyContent: "center", gap: "10px" }}>
-        <button onClick={() => setFilter('ontime')} style={getFilterButtonStyle('ontime')}>
-          On-time
-        </button>
-        <button onClick={() => setFilter('overdue')} style={getFilterButtonStyle('overdue')}>
-          Overdue
-        </button>
-        <button onClick={() => setFilter('selesai')} style={getFilterButtonStyle('selesai')}>
-          Selesai
-        </button>
+      {/* Wadah utama dengan lebar tetap */}
+      <div style={{ maxWidth: "600px", margin: "0 auto" }}>
+        <h1>📝 NoteDo</h1>
+        <TaskForm onAdd={addTask} />
+
+        {/* --- KODE TOMBOL FILTER YANG HILANG, SEKARANG DIKEMBALIKAN --- */}
+        <div style={{ margin: "25px 0", display: "flex", justifyContent: "center", gap: "10px" }}>
+          <button onClick={() => setFilter('ontime')} style={getFilterButtonStyle('ontime')}>
+            On-time
+          </button>
+          <button onClick={() => setFilter('overdue')} style={getFilterButtonStyle('overdue')}>
+            Overdue
+          </button>
+          <button onClick={() => setFilter('selesai')} style={getFilterButtonStyle('selesai')}>
+            Selesai
+          </button>
+        </div>
+        {/* --- AKHIR DARI BAGIAN YANG DIKEMBALIKAN --- */}
+        
+        <TaskList
+          tasks={filteredTasks}
+          onToggle={toggleTask}
+          onDelete={deleteTask}
+          onUpdate={updateTask}
+        />
       </div>
-      <TaskList tasks={filteredTasks} onToggle={toggleTask} onDelete={deleteTask} />
     </div>
   );
 }
