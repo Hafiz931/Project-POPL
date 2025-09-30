@@ -3,14 +3,20 @@ import TaskItem from "./TaskItem";
 function TaskList({ tasks, onToggle, onDelete }) {
   return (
     <ul style={{ listStyle: "none", padding: 0 }}>
-      {tasks.map((task, index) => (
-        <TaskItem
-          key={index}
-          task={task}
-          onToggle={() => onToggle(index)}
-          onDelete={() => onDelete(index)}
-        />
-      ))}
+      {tasks.length > 0 ? (
+        tasks.map((task) => (
+          <TaskItem
+            key={task.id}
+            task={task}
+            onToggle={() => onToggle(task.id)}
+            onDelete={() => onDelete(task.id)}
+          />
+        ))
+      ) : (
+        <p style={{ color: "#888", marginTop: "20px" }}>
+          Tidak ada tugas dalam kategori ini.
+        </p>
+      )}
     </ul>
   );
 }
