@@ -6,8 +6,14 @@ import './App.css';
 function App() {
   const [tasks, setTasks] = useState([]);
 
-  const addTask = (text) => {
-    setTasks([...tasks, { text, done: false }]);
+  // Fungsi addTask sekarang menerima objek taskData
+  const addTask = (taskData) => {
+    // taskData berisi { text, startTime, endTime }
+    const newTask = {
+      ...taskData, // Salin semua properti dari taskData
+      done: false
+    };
+    setTasks([...tasks, newTask]);
   };
 
   const toggleTask = (index) => {
@@ -21,7 +27,7 @@ function App() {
   };
 
   return (
-    <div style={{ maxWidth: "500px", margin: "50px auto", fontFamily: "Arial", textAlign: "center" }}>
+    <div>
       <h1>📝 NoteDo</h1>
       <TaskForm onAdd={addTask} />
       <TaskList tasks={tasks} onToggle={toggleTask} onDelete={deleteTask} />
