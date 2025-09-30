@@ -1,23 +1,4 @@
 {
-  "name": "project-popl",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Hafiz931/Project-POPL.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Hafiz931/Project-POPL/issues"
-  },
-  "homepage": "https://github.com/Hafiz931/Project-POPL#readme"
-
   "name": "note-do",
   "private": true,
   "version": "0.0.0",
