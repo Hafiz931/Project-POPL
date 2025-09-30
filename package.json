@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
   "name": "project-popl",
   "version": "1.0.0",
   "description": "",
@@ -18,7 +17,7 @@
     "url": "https://github.com/Hafiz931/Project-POPL/issues"
   },
   "homepage": "https://github.com/Hafiz931/Project-POPL#readme"
-=======
+
   "name": "note-do",
   "private": true,
   "version": "0.0.0",
@@ -45,5 +44,4 @@
     "globals": "^16.4.0",
     "vite": "^7.1.7"
   }
->>>>>>> 8b3954165c2796f32aa4e5d49e864987938a67d8
 }
