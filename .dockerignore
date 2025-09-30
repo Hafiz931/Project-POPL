@@ -1,0 +1,13 @@
+# Dependensi lokal
+node_modules
+
+# Folder output build lokal
+dist
+
+# Git
+.git
+.gitignore
+
+# File log dan environment
+npm-debug.log
+.env
