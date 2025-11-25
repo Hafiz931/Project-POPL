@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
 import Sidebar from "./components/Sidebar";
 import TaskList from "./components/TaskList";
-import AddTaskForm from "./components/AddTaskForm";
+import AddTaskForm from "./components/TaskForm";
 import Dashboard from "./pages/Dashboard";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { isTaskOverdue, generateId } from "./utils/taskUtils";
