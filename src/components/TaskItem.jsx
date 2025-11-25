@@ -1,76 +1,282 @@
-import { useState } from "react"; // Impor useState
+import React, { useState } from "react";
+import {
+  Check,
+  Edit3,
+  Trash2,
+  Clock,
+  AlertCircle,
+  Calendar,
+  Flag,
+  Save,
+  X,
+} from "lucide-react";
+import { formatDate, isTaskOverdue, getTaskPriority } from "../utils/taskUtils";
+import TimeProgress from "./TimeProgress";
 
-// Terima onUpdate sebagai props
-function TaskItem({ task, onToggle, onDelete, onUpdate }) {
-  // State untuk mengontrol mode edit
+const TaskItem = ({
+  task,
+  onDeleteTask,
+  onEditTask,
+  onToggleComplete,
+  allTags = [],
+  onStartPomodoro,
+}) => {
   const [isEditing, setIsEditing] = useState(false);
-  // State untuk menyimpan data yang sedang diedit
   const [editData, setEditData] = useState({
-    text: task.text,
-    startTime: task.startTime,
-    endTime: task.endTime
+    title: task.title,
+    description: task.description,
+    priority: task.priority,
+    dueDate: task.dueDate || "",
+    reminderTime: task.reminderTime || "",
   });
 
-  const handleUpdate = () => {
-    if (editData.text.trim() === "" || !editData.startTime || !editData.endTime) {
-      alert("Harap isi semua kolom.");
-      return;
-    }
-    // Kirim ID dan data baru ke App.jsx
-    onUpdate(task.id, editData);
-    // Keluar dari mode edit
+  const isOverdue = isTaskOverdue(task.dueDate);
+  const priority = getTaskPriority(task.priority);
+
+  const handleEdit = () => setIsEditing(true);
+
+  const handleSave = () => {
+    if (!editData.title.trim()) return;
+
+    onEditTask(task.id, {
+      ...editData,
+      title: editData.title.trim(),
+      description: editData.description.trim(),
+      dueDate: editData.dueDate || null,
+      reminderTime: editData.reminderTime || null,
+    });
+
     setIsEditing(false);
   };
 
-  // Fungsi untuk menangani perubahan pada input form edit
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setEditData({ ...editData, [name]: value });
+  const handleCancel = () => {
+    setEditData({
+      title: task.title,
+      description: task.description,
+      priority: task.priority,
+      dueDate: task.dueDate || "",
+      reminderTime: task.reminderTime || "",
+    });
+    setIsEditing(false);
   };
 
-  // --- Tampilan saat mode edit aktif ---
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setEditData((prev) => ({ ...prev, [name]: value }));
+  };
+
   if (isEditing) {
     return (
-      <li style={{ padding: "15px", border: "1px solid #646cff", borderRadius: "8px", marginBottom: "12px", display: "flex", flexDirection: "column", gap: "10px" }}>
-        <input type="text" name="text" value={editData.text} onChange={handleInputChange} style={{ padding: "8px", backgroundColor: "#333", color: "white", border: "1px solid #555" }} />
-        <div style={{ display: "flex", gap: "10px" }}>
-          <input type="datetime-local" name="startTime" value={editData.startTime} onChange={handleInputChange} style={{ flex: 1, padding: "8px", backgroundColor: "#333", color: "white", border: "1px solid #555" }}/>
-          <input type="datetime-local" name="endTime" value={editData.endTime} onChange={handleInputChange} style={{ flex: 1, padding: "8px", backgroundColor: "#333", color: "white", border: "1px solid #555" }}/>
+      <div className="card border-2 border-primary-200">
+        <div className="space-y-4">
+          <input
+            type="text"
+            name="title"
+            value={editData.title}
+            onChange={handleChange}
+            className="input-field font-medium"
+            placeholder="Task Title"
+          />
+
+          <textarea
+            name="description"
+            value={editData.description}
+            onChange={handleChange}
+            rows="2"
+            className="input-field resize-none"
+            placeholder="Task Description"
+          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Priority
+              </label>
+              <select
+                name="priority"
+                value={editData.priority}
+                onChange={handleChange}
+                className="input-field text-sm"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Due Date
+              </label>
+              <input
+                type="datetime-local"
+                name="dueDate"
+                value={editData.dueDate}
+                onChange={handleChange}
+                className="input-field text-sm"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              Reminder Time
+            </label>
+            <input
+              type="datetime-local"
+              name="reminderTime"
+              value={editData.reminderTime}
+              onChange={handleChange}
+              className="input-field text-sm"
+            />
+          </div>
+
+          <div className="flex space-x-2 pt-2">
+            <button
+              onClick={handleSave}
+              className="flex items-center px-3 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors duration-200 shadow-sm"
+            >
+              <Save className="h-4 w-4 mr-1.5" />
+              <span>Save</span>
+            </button>
+            <button
+              onClick={handleCancel}
+              className="flex items-center px-3 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors duration-200"
+            >
+              <X className="h-4 w-4" />
+              <span>Cancel</span>
+            </button>
+          </div>
         </div>
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-          <button onClick={() => setIsEditing(false)} style={{ padding: "5px 10px", border: "1px solid #888", background: "transparent", color: "#888" }}>Batal</button>
-          <button onClick={handleUpdate} style={{ padding: "5px 10px", border: "none", background: "#2ecc71", color: "white" }}>Simpan</button>
-        </div>
-      </li>
+      </div>
     );
   }
 
-  // --- Tampilan normal ---
-  const formattingOptions = { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
-  const formattedStartTime = new Date(task.startTime).toLocaleString("id-ID", formattingOptions);
-  const formattedEndTime = new Date(task.endTime).toLocaleString("id-ID", formattingOptions);
-  const isOverdue = new Date(task.endTime) < new Date() && !task.done;
-
   return (
-    <li style={{ marginBottom: "12px", padding: "15px", border: `1px solid ${isOverdue ? '#e53e3e' : '#444'}`, borderRadius: "8px" }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
-          <input type="checkbox" checked={task.done} onChange={onToggle} style={{ marginRight: '15px', cursor: 'pointer', width: '20px', height: '20px' }} />
-          <span style={{ textDecoration: task.done ? "line-through" : "none", fontSize: "1.2rem", fontWeight: "bold", color: task.done ? '#888' : 'white', overflowWrap: 'break-word', wordWrap: 'break-word' }}>
-            {task.text}
-          </span>
-        </div>
-        <div style={{ display: "flex", gap: "5px", marginLeft: "10px" }}>
-          {/* TOMBOL EDIT WARNA KUNING */}
-          <button onClick={() => setIsEditing(true)} style={{ padding: "5px 10px", background: "#f1c40f", color: "black", border: "none", borderRadius: "4px", cursor: "pointer" }}>Edit</button>
-          <button onClick={onDelete} style={{ padding: "5px 10px", background: "red", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}>Hapus</button>
+    <div
+      className={`card transition-all duration-200 hover:shadow-md ${
+        task.completed ? "opacity-75" : ""
+      } ${isOverdue && !task.completed ? "border-l-4 border-red-500" : ""}`}
+    >
+      <div className="flex items-start space-x-4">
+        <button
+          onClick={() => onToggleComplete(task.id)}
+          className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+            task.completed
+              ? "bg-brand-500 border-brand-500 text-white shadow-sm"
+              : "border-gray-300 hover:border-brand-500 bg-white"
+          }`}
+        >
+          {task.completed && <Check className="h-4 w-4" />}
+        </button>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h3
+                className={`font-medium text-gray-900 ${
+                  task.completed ? "line-through" : ""
+                }`}
+              >
+                {task.title}
+              </h3>
+
+              {task.description && (
+                <p
+                  className={`mt-1 text-sm text-gray-600 ${
+                    task.completed ? "line-through" : ""
+                  }`}
+                >
+                  {task.description}
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {task.tags &&
+                task.tags.map((tagId) => {
+                  const tag = allTags.find((t) => t.id === tagId);
+                  if (!tag) return null;
+                  return (
+                    <span
+                      key={tag.id}
+                      className={`px-2 py-0.5 text-xs font-medium rounded-full ${tag.color}`}
+                    >
+                      {tag.name}
+                    </span>
+                  );
+                })}
+              <span
+                className={`px-2 py-1 text-xs font-semibold rounded-full ${priority.color}`}
+              >
+                {priority.label}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-3 flex items-center justify-between">
+            <div className="flex items-center space-x-4 text-sm text-gray-500">
+              {task.dueDate && (
+                <div
+                  className={`flex items-center space-x-1 ${
+                    isOverdue && !task.completed
+                      ? "text-red-500 font-medium"
+                      : ""
+                  }`}
+                >
+                  {isOverdue && !task.completed ? (
+                    <AlertCircle className="h-4 w-4" />
+                  ) : (
+                    <Calendar className="h-4 w-4" />
+                  )}
+                  <span>Due: {formatDate(task.dueDate)}</span>
+                  {!task.completed && (
+                    <div className="ml-1">
+                      <TimeProgress
+                        createdAt={task.createdAt}
+                        dueDate={task.dueDate}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {task.reminderTime && !task.completed && (
+                <div className="flex items-center space-x-1">
+                  <Clock className="h-4 w-4" />
+                  <span>Reminder: {formatDate(task.reminderTime)}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => onStartPomodoro(task)}
+                className="p-1 text-gray-400 hover:text-brand-600 transition-colors"
+                title="Start Focus Timer"
+              >
+                <Clock className="h-4 w-4" />
+              </button>
+              <button
+                onClick={handleEdit}
+                className="p-1 text-gray-400 hover:text-brand-600 transition-colors"
+                title="Edit Task"
+              >
+                <Edit3 className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => onDeleteTask(task.id)}
+                className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                title="Delete Task"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-      <div style={{ fontSize: "0.9em", color: "#aaa" }}>
-        <span>Mulai: {formattedStartTime}</span> | <span>Selesai: {formattedEndTime}</span>
-      </div>
-    </li>
+    </div>
   );
-}
+};
 
 export default TaskItem;
