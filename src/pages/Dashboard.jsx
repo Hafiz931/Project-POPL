@@ -1,4 +1,4 @@
-import React, { useMemo } from "react"; // Hapus useState & useEffect, Ganti dengan useMemo
+import React, { useMemo } from "react";
 import {
   CheckCircle,
   Clock,
@@ -6,11 +6,13 @@ import {
   TrendingUp,
   Calendar,
   Target,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
-import { isTaskOverdue, formatDate } from "../utils/taskUtils"; // Asumsi impor utilitas
+import { isTaskOverdue, formatDate } from "../utils/taskUtils";
 
 // =================================================================
-// KOMPONEN UTILITAS (DIDEKLARASIKAN DI LUAR KOMPONEN UTAMA)
+// KOMPONEN UTILITAS
 // =================================================================
 
 const StatCard = ({ title, value, color, bgColor, Icon }) => (
@@ -19,7 +21,6 @@ const StatCard = ({ title, value, color, bgColor, Icon }) => (
       <p className="text-sm font-medium text-gray-600">{title}</p>
       <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
     </div>
-    {/* Menggunakan prop bgColor dan Icon sebagai komponen dengan benar */}
     <div
       className={`p-3 rounded-full h-10 w-10 flex items-center justify-center mt-3 ${bgColor}`}
     >
@@ -37,12 +38,119 @@ const ProgressBar = ({ percentage }) => (
   </div>
 );
 
+// Komponen Kalender Baru
+const CalendarWidget = () => {
+  const [currentDate, setCurrentDate] = React.useState(new Date());
+
+  const getDaysInMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  const monthName = currentDate.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+
+  const daysInMonth = getDaysInMonth(currentDate);
+  const firstDay = getFirstDayOfMonth(currentDate);
+  const days = [];
+
+  // Empty cells untuk hari sebelum hari pertama bulan
+  for (let i = 0; i < firstDay; i++) {
+    days.push(null);
+  }
+
+  // Tanggal dalam bulan
+  for (let i = 1; i <= daysInMonth; i++) {
+    days.push(i);
+  }
+
+  const handlePrevMonth = () => {
+    setCurrentDate(
+      new Date(currentDate.getFullYear(), currentDate.getMonth() - 1)
+    );
+  };
+
+  const handleNextMonth = () => {
+    setCurrentDate(
+      new Date(currentDate.getFullYear(), currentDate.getMonth() + 1)
+    );
+  };
+
+  const today = new Date();
+  const isToday = (day) => {
+    return (
+      day &&
+      day === today.getDate() &&
+      currentDate.getMonth() === today.getMonth() &&
+      currentDate.getFullYear() === today.getFullYear()
+    );
+  };
+
+  return (
+    <div className="card">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">Calendar</h3>
+        <Calendar className="h-5 w-5 text-primary-500" />
+      </div>
+
+      {/* Month Navigation */}
+      <div className="flex items-center justify-between mb-4">
+        <button
+          onClick={handlePrevMonth}
+          className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <ChevronLeft className="h-5 w-5 text-gray-600" />
+        </button>
+        <p className="text-sm font-semibold text-gray-900">{monthName}</p>
+        <button
+          onClick={handleNextMonth}
+          className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <ChevronRight className="h-5 w-5 text-gray-600" />
+        </button>
+      </div>
+
+      {/* Day Headers */}
+      <div className="grid grid-cols-7 gap-1 mb-2">
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+          <div key={day} className="text-center text-xs font-semibold text-gray-600">
+            {day}
+          </div>
+        ))}
+      </div>
+
+      {/* Calendar Days */}
+      <div className="grid grid-cols-7 gap-1">
+        {days.map((day, index) => (
+          <div
+            key={index}
+            className={`text-center py-2 text-sm rounded-lg ${
+              isToday(day)
+                ? "bg-brand-500 text-white font-semibold"
+                : day
+                ? "hover:bg-gray-100 cursor-pointer text-gray-900"
+                : "text-gray-300"
+            }`}
+          >
+            {day}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // =================================================================
 // KOMPONEN UTAMA DASHBOARD
 // =================================================================
 
 const Dashboard = ({ tasks }) => {
-  // --- DERIVED STATE: Perhitungan Statistik (Menggunakan useMemo) ---
+  // ...existing code...
   const stats = useMemo(() => {
     const total = tasks.length;
     const completed = tasks.filter((task) => task.completed).length;
@@ -61,9 +169,7 @@ const Dashboard = ({ tasks }) => {
       completionRate,
     };
   }, [tasks]);
-  // ------------------------------------------------------------------
 
-  // --- DERIVED STATE: Upcoming Tasks (Menggunakan useMemo) ---
   const upcomingTasks = useMemo(() => {
     const now = new Date();
     const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -77,9 +183,7 @@ const Dashboard = ({ tasks }) => {
       .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
       .slice(0, 5);
   }, [tasks]);
-  // -----------------------------------------------------------
 
-  // --- Logika Filtering Cepat untuk Quick Stats ---
   const todayTasks = useMemo(
     () =>
       tasks.filter((task) => {
@@ -95,19 +199,12 @@ const Dashboard = ({ tasks }) => {
     () =>
       tasks.filter((task) => {
         if (!task.dueDate) return false;
-
-        // Perhitungan rentang mingguan harus dibuat ulang setiap kali tasks berubah
         const now = new Date();
-        // Menggunakan date-fns atau library lain lebih direkomendasikan untuk tanggal,
-        // namun kita mengikuti logika dasar kode:
         const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
         const endOfWeek = new Date(now.getDate() + 6);
-
         const taskDate = new Date(task.dueDate);
-
         startOfWeek.setHours(0, 0, 0, 0);
         endOfWeek.setHours(23, 59, 59, 999);
-
         return taskDate >= startOfWeek && taskDate <= endOfWeek;
       }).length,
     [tasks]
@@ -119,7 +216,6 @@ const Dashboard = ({ tasks }) => {
         .length,
     [tasks]
   );
-  // ------------------------------------------------
 
   return (
     <div className="flex-1 p-6">
@@ -230,7 +326,10 @@ const Dashboard = ({ tasks }) => {
             </div>
           </div>
         </div>
+      </div>
 
+      {/* Upcoming Tasks & Calendar Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Upcoming Tasks */}
         <div className="card">
           <div className="flex items-center justify-between mb-6">
@@ -278,6 +377,9 @@ const Dashboard = ({ tasks }) => {
             </div>
           )}
         </div>
+
+        {/* Calendar Widget */}
+        <CalendarWidget />
       </div>
     </div>
   );
