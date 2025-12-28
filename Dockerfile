@@ -1,37 +1,44 @@
 # --- TAHAP 1: BUILD STAGE ---
-# Menggunakan base image Node.js versi 18-alpine untuk membangun aplikasi.
-# 'AS builder' memberi nama pada tahap ini agar bisa dirujuk nanti.
 FROM node:18-alpine AS builder
 
-# Menetapkan direktori kerja di dalam kontainer
 WORKDIR /app
 
-# Menyalin package.json dan package-lock.json untuk mengoptimalkan cache Docker
+# Copy package files
 COPY package*.json ./
 
-# Meng-install semua dependensi yang dibutuhkan proyek
+# Install ALL dependencies (including devDependencies for building)
 RUN npm install
 
-# Menyalin seluruh kode sumber proyek Anda ke dalam kontainer
+# Copy source code
 COPY . .
 
-# Menjalankan script 'build' dari package.json (vite build)
-# Ini akan menghasilkan folder 'dist' yang berisi file statis siap produksi
+# Build the React app
 RUN npm run build
 
 
-# --- TAHAP 2: PRODUCTION STAGE ---
-# Menggunakan base image Nginx yang sangat ringan untuk menjalankan aplikasi
-FROM nginx:stable-alpine
+# --- TAHAP 2: PRODUCTION STAGE (NODE.JS SERVER) ---
+# Kita gunakan Node.js untuk serving + logging (Winston), BUKAN Nginx lagi.
+FROM node:18-alpine AS runner
 
-# Menyalin file hasil build dari tahap 'builder' ke direktori web server Nginx
-COPY --from=builder /app/dist /usr/share/nginx/html
+WORKDIR /app
 
-# Menimpa konfigurasi Nginx default dengan file konfigurasi kustom kita
-COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
+# Buat folder log agar bisa di-mount volume
+RUN mkdir -p /var/log/app
 
-# Memberi tahu Docker bahwa kontainer akan berjalan pada port 80
-EXPOSE 80
+# Copy package files lagi untuk install dependencies production (express, winston)
+COPY package*.json ./
 
-# Perintah default dari image Nginx akan dijalankan untuk memulai server
-# CMD ["nginx", "-g", "daemon off;"]
+# Install ONLY production dependencies
+RUN npm install --omit=dev
+
+# Copy hasil build React dari stage builder ke folder 'dist'
+COPY --from=builder /app/dist ./dist
+
+# Copy file server Node.js kita
+COPY server.js .
+
+# Expose port aplikasi (Express berjalan di 3000)
+EXPOSE 3000
+
+# Jalankan server
+CMD ["node", "server.js"]

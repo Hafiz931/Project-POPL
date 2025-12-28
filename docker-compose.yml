@@ -1,0 +1,79 @@
+services:
+  # Main Application (Node.js + React + Winston)
+  note-do:
+    container_name: Note-Do
+    build: .
+    ports:
+      # Expose port aplikasi (Node.js server)
+      - "3000:3000"
+    volumes:
+      # Volume untuk menulis file log agar bisa dibaca Promtail
+      - app-logs:/var/log/app
+    networks:
+      - loki-network
+    restart: unless-stopped
+    depends_on:
+      - loki
+
+  # Loki - Log aggregation system
+  loki:
+    image: grafana/loki:2.9.3
+    container_name: loki
+    user: "0"
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./config/loki/loki-config.yml:/etc/loki/local-config.yaml
+      - loki-data:/tmp/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - loki-network
+    restart: unless-stopped
+
+  # Promtail - Log collector
+  promtail:
+    image: grafana/promtail:2.9.3
+    container_name: promtail
+    volumes:
+      - ./config/promtail/promtail-config.yml:/etc/promtail/config.yml
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Mount volume yang sama untuk membaca file log aplikasi
+      - app-logs:/var/log/app
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - loki-network
+    depends_on:
+      - loki
+    restart: unless-stopped
+
+  # Grafana - Visualization dashboard
+  grafana:
+    image: grafana/grafana:10.2.3
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+      - ./config/grafana/provisioning/dashboards/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml
+      - ./config/grafana/dashboards/note-do-dashboard.json:/var/lib/grafana/dashboards/note-do-dashboard.json
+    networks:
+      - loki-network
+    depends_on:
+      - loki
+    restart: unless-stopped
+
+volumes:
+  loki-data:
+  grafana-data:
+  app-logs: # Volume baru untuk log
+
+networks:
+  loki-network:
+    name: loki-network
+    driver: bridge

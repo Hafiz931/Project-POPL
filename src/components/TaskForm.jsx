@@ -31,6 +31,16 @@ const AddTaskForm = ({ onAddTask, isOpen, onToggle, tags, onAddTag }) => {
     };
 
     onAddTask(newTask);
+
+    // Log activity
+    import("../utils/logger").then(({ logger }) => {
+      logger.info(`Task created: ${newTask.title}`, {
+        taskId: newTask.id,
+        priority: newTask.priority,
+        hasDueDate: !!newTask.dueDate,
+      });
+    });
+
     setFormData({
       title: "",
       description: "",

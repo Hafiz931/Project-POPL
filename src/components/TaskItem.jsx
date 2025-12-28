@@ -160,7 +160,15 @@ const TaskItem = ({
     >
       <div className="flex items-start space-x-4">
         <button
-          onClick={() => onToggleComplete(task.id)}
+          onClick={() => {
+            onToggleComplete(task.id);
+            import("../utils/logger").then(({ logger }) => {
+              logger.info(`Task completion toggled: ${task.title}`, {
+                taskId: task.id,
+                completed: !task.completed,
+              });
+            });
+          }}
           className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
             task.completed
               ? "bg-brand-500 border-brand-500 text-white shadow-sm"
@@ -265,7 +273,14 @@ const TaskItem = ({
                 <Edit3 className="h-4 w-4" />
               </button>
               <button
-                onClick={() => onDeleteTask(task.id)}
+                onClick={() => {
+                  onDeleteTask(task.id);
+                  import("../utils/logger").then(({ logger }) => {
+                    logger.warn(`Task deleted: ${task.title}`, {
+                      taskId: task.id,
+                    });
+                  });
+                }}
                 className="p-1 text-gray-400 hover:text-red-600 transition-colors"
                 title="Delete Task"
               >
